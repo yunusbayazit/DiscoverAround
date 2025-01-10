@@ -1,0 +1,10 @@
+<dict>
+    ...
+    <key>NSCameraUsageDescription</key>
+    <string>Bu uygulama çevrenizdeki yerleri göstermek için kameraya erişim gerektirir</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Çevrenizdeki yerleri gösterebilmek için konumunuza ihtiyacımız var</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>Çevrenizdeki yerleri gösterebilmek için konumunuza ihtiyacımız var</string>
+    ...
+</dict> 

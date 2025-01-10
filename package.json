@@ -7,16 +7,28 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "link-assets": "react-native-asset"
   },
   "dependencies": {
+    "@react-native-community/geolocation": "^3.4.0",
+    "@react-native-community/masked-view": "^0.1.11",
+    "@react-native/assets-registry": "^0.76.5",
+    "axios": "^1.7.9",
     "react": "18.3.1",
-    "react-native": "0.76.5"
+    "react-native": "0.76.5",
+    "react-native-compass-heading": "^2.0.0",
+    "react-native-orientation-locker": "^1.7.0",
+    "react-native-permissions": "^5.2.2",
+    "react-native-sensors": "^7.3.6",
+    "react-native-svg-transformer": "^1.5.0",
+    "react-native-vision-camera": "^4.6.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@babel/plugin-transform-runtime": "^7.25.9",
     "@babel/preset-env": "^7.25.3",
-    "@babel/runtime": "^7.25.0",
+    "@babel/runtime": "^7.26.0",
     "@react-native-community/cli": "15.0.1",
     "@react-native-community/cli-platform-android": "15.0.1",
     "@react-native-community/cli-platform-ios": "15.0.1",
@@ -35,5 +47,17 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "reactNativePermissionsIOS": [
+    "Camera",
+    "LocationWhenInUse",
+    "LocationAlways"
+  ],
+  "reactNativePermissions": {
+    "ios": {
+      "camera": true,
+      "locationWhenInUse": true,
+      "locationAlways": true
+    }
   }
 }

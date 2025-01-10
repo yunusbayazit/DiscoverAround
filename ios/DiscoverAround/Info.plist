@@ -32,8 +32,14 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Kamerayı kullanmak için izin gerekiyor</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>Uygulamayı kullanırken konumunuza erişmemiz gerekiyor</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Arka planda da konumunuza erişmemiz gerekiyor</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Arka planda konumunuza erişmemiz gerekiyor</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
