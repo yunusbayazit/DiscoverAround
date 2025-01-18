@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, Alert, Platform, LogBox, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, Alert, Platform, LogBox, Dimensions, TouchableOpacity, Modal } from 'react-native';
 import { Camera, useCameraDevice } from 'react-native-vision-camera';
 import Geolocation from '@react-native-community/geolocation';
 import CompassHeading from 'react-native-compass-heading';
@@ -15,226 +15,91 @@ const ErrorDisplay = ({ message }) => (
   </View>
 );
 
-// Yerel POI veritabanı
-const LOCAL_PLACES_DB = [
-  {
-    name: "Anıtkabir",
-    geometry: {
-      location: {
-        lat: 39.925533,
-        lng: 32.836417
-      }
-    },
-    types: ["müze", "tarihi_yer"]
-  },
-  {
-    name: "Kızılay Meydanı",
-    geometry: {
-      location: {
-        lat: 29.126103664414654 ,
-        lng: 40.92349702003389
-      }
-    },
-    types: ["meydan"]
-  },
-  {
-    name: "TBMM",
-    geometry: {
-      location: {
-        lat: 39.911268,
-        lng: 32.850749
-      }
-    },
-    types: ["resmi_bina"]
-  },
-  {
-    name: "Maltepe Sahil",
-    geometry: {
-      location: {
-        lat: 40.919869,
-        lng: 29.127878
-      }
-    },
-    types: ["park", "sahil"]
-  },
-  {
-    name: "Maltepe Meydanı",
-    geometry: {
-      location: {
-        lat: 40.922241,
-        lng: 29.129386
-      }
-    },
-    types: ["meydan"]
-  },
-  {
-    name: "Dragos Tepesi",
-    geometry: {
-      location: {
-        lat: 40.914722,
-        lng: 29.127778
-      }
-    },
-    types: ["park", "manzara"]
-  },
-  {
-    name: "Başıbüyük Hastanesi",
-    geometry: {
-      location: {
-        lat: 40.927778,
-        lng: 29.131944
-      }
-    },
-    types: ["hastane"]
-  },
-  {
-    name: "Maltepe Üniversitesi",
-    geometry: {
-      location: {
-        lat: 40.928889,
-        lng: 29.130833
-      }
-    },
-    types: ["üniversite"]
-  },
-  {
-    name: "Maltepe Park AVM",
-    geometry: {
-      location: {
-        lat: 40.922500,
-        lng: 29.128611
-      }
-    },
-    types: ["avm"]
-  },
-  {
-    name: "Espressolab Maltepe Sahil",
-    geometry: {
-      location: {
-        lat: 40.919444,
-        lng: 29.127222
-      }
-    },
-    types: ["kafe", "kahve"]
-  },
-  {
-    name: "Pelit Pastanesi Maltepe",
-    geometry: {
-      location: {
-        lat: 40.919722,
-        lng: 29.127500
-      }
-    },
-    types: ["pastane", "cafe"]
-  },
-  {
-    name: "Starbucks Maltepe Sahil",
-    geometry: {
-      location: {
-        lat: 40.919556,
-        lng: 29.127111
-      }
-    },
-    types: ["kafe", "kahve"]
-  },
-  {
-    name: "Kahve Dünyası Maltepe",
-    geometry: {
-      location: {
-        lat: 40.919333,
-        lng: 29.127444
-      }
-    },
-    types: ["kafe", "kahve"]
-  },
-  {
-    name: "Burger King Maltepe Sahil",
-    geometry: {
-      location: {
-        lat: 40.919778,
-        lng: 29.126889
-      }
-    },
-    types: ["restoran", "fast-food"]
-  },
-  {
-    name: "Midpoint Maltepe",
-    geometry: {
-      location: {
-        lat: 40.919222,
-        lng: 29.127667
-      }
-    },
-    types: ["restoran"]
-  },
-  {
-    name: "Big Chefs Maltepe",
-    geometry: {
-      location: {
-        lat: 40.919111,
-        lng: 29.127889
-      }
-    },
-    types: ["restoran", "kafe"]
-  },
-  {
-    name: "Mado Maltepe Sahil",
-    geometry: {
-      location: {
-        lat: 40.919444,
-        lng: 29.127333
-      }
-    },
-    types: ["kafe", "dondurma"]
-  },
-  {
-    name: "Köfteci Yusuf Maltepe",
-    geometry: {
-      location: {
-        lat: 40.919667,
-        lng: 29.127000
-      }
-    },
-    types: ["restoran", "köfte"]
-  },
-  {
-    name: "HD İskender Maltepe",
-    geometry: {
-      location: {
-        lat: 40.919889,
-        lng: 29.126778
-      }
-    },
-    types: ["restoran", "iskender"]
-  },
-  {
-    name: "Baklava Sarayı",
-    geometry: {
-      location: {
-        lat: 40.919333,
-        lng: 29.127556
-      }
-    },
-    types: ["tatlıcı", "baklava"]
-  },
-  {
-    name: "Özsüt Maltepe",
-    geometry: {
-      location: {
-        lat: 40.919222,
-        lng: 29.127778
-      }
-    },
-    types: ["pastane", "tatlıcı"]
-  }
-  // Daha fazla yer ekleyebilirsiniz
-];
+const PlaceDetailModal = ({ isVisible, place, onClose }) => {
+  if (!isVisible || !place) return null;
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>{place.name}</Text>
+          <View style={styles.modalDetails}>
+            <Text style={styles.modalDistance}>
+              Mesafe: {place.distance.toFixed(1)} km
+            </Text>
+            <Text style={styles.modalType}>
+              Tür: {place.types[0]}
+            </Text>
+            {Object.entries(place.tags || {}).map(([key, value]) => (
+              <Text key={key} style={styles.modalTag}>
+                {key}: {value}
+              </Text>
+            ))}
+          </View>
+          <TouchableOpacity 
+            style={styles.closeButton}
+            onPress={onClose}
+          >
+            <Text style={styles.closeButtonText}>Kapat</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+// Radius kontrol panelini güncelleyelim
+const RadiusControl = ({ searchRadius, onRadiusChange }) => {
+  const decreaseRadius = () => {
+    console.log('Azaltma tıklandı, mevcut değer:', searchRadius);
+    const newRadius = Math.max(0.1, searchRadius - 0.5);
+    console.log('Yeni değer:', newRadius);
+    onRadiusChange(newRadius);
+  };
+
+  const increaseRadius = () => {
+    console.log('Artırma tıklandı, mevcut değer:', searchRadius);
+    const newRadius = Math.min(5, searchRadius + 0.5);
+    console.log('Yeni değer:', newRadius);
+    onRadiusChange(newRadius);
+  };
+
+  return (
+    <View style={styles.radiusControl}>
+      <Text style={styles.radiusText}>Arama Yarıçapı: {searchRadius.toFixed(1)} km</Text>
+      <View style={styles.radiusButtons}>
+        <TouchableOpacity 
+          style={styles.radiusButton} 
+          onPress={decreaseRadius}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.buttonText}>-</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.radiusButton}
+          onPress={increaseRadius}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.buttonText}>+</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
 
 const App = () => {
   const [places, setPlaces] = useState([]);
   const [currentLocation, setCurrentLocation] = useState(null);
   const [deviceOrientation, setDeviceOrientation] = useState(0);
   const [cameraPermission, setCameraPermission] = useState(false);
+  const [searchRadius, setSearchRadius] = useState(1); // km cinsinden yarıçap
+  const [selectedPlace, setSelectedPlace] = useState(null);
   
   const device = useCameraDevice('back')
 
@@ -253,26 +118,70 @@ const App = () => {
 
   // Konum izinlerini al
   useEffect(() => {
-    const setupPermissionsAndTracking = async () => {
+    const setupLocationTracking = async () => {
       const hasPermission = await requestLocationPermission();
       if (hasPermission) {
-        startLocationTracking();
+        // Konum izleme için watchPosition başlat
+        const watchId = Geolocation.watchPosition(
+          position => {
+            console.log('Yeni konum alındı:', position);
+            const newLocation = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            };
+            
+            setCurrentLocation(newLocation);
+            // Yeni konuma göre yerleri güncelle
+            throttledFetchNearbyPlaces(newLocation.latitude, newLocation.longitude);
+          },
+          error => {
+            console.log('Konum hatası:', error);
+            Alert.alert(
+              'Konum Hatası',
+              'Konumunuza erişilemedi. Lütfen konum servislerini açtığınızdan emin olun.',
+              [{ text: 'Tamam' }]
+            );
+          },
+          { 
+            enableHighAccuracy: true, 
+            timeout: 20000, 
+            maximumAge: 1000,
+            distanceFilter: 10 // 10 metre hareket edildiğinde güncelle
+          }
+        );
+
+        // Cleanup function
+        return () => {
+          if (watchId) {
+            Geolocation.clearWatch(watchId);
+          }
+        };
       }
     };
-    setupPermissionsAndTracking();
-  }, []);
 
-  // Pusula yönünü izle
+    setupLocationTracking();
+  }, []); // Sadece component mount olduğunda çalışsın
+
+  // Pusula için useEffect'i güncelle
   useEffect(() => {
     const degree_update_rate = 3;
+    
+    // Pusula başlat
     CompassHeading.start(degree_update_rate, ({heading}) => {
       setDeviceOrientation(heading);
+      // Yön değiştiğinde mevcut konumla yerleri yeniden çek
+      if (currentLocation) {
+        throttledFetchNearbyPlaces(
+          currentLocation.latitude,
+          currentLocation.longitude
+        );
+      }
     });
 
     return () => {
       CompassHeading.stop();
     };
-  }, []);
+  }, [currentLocation]); // currentLocation değiştiğinde yeniden bağlan
 
   // Kamera hazır değilse bekle
   if (!device) {
@@ -310,56 +219,154 @@ const App = () => {
     }
   };
 
-  const startLocationTracking = () => {
-    Geolocation.watchPosition(
-      position => {
-        console.log('Konum alındı:', position);
-        console.log('Konum alındı:', position.coords.latitude);
-        console.log('Konum alındı:', position.coords.longitude);
-        setCurrentLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-        fetchNearbyPlaces(position.coords.latitude, position.coords.longitude);
-      },
-      error => {
-        console.log('Location error:', error);
-        Alert.alert(
-          'Konum Hatası',
-          'Konumunuza erişilemedi. Lütfen konum servislerini açtığınızdan emin olun.',
-          [{ text: 'Tamam' }]
-        );
-      },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
-    );
-  };
-
-  const fetchNearbyPlaces = (latitude, longitude) => {
+  const fetchNearbyPlaces = async (latitude, longitude) => {
     try {
-      console.log('fetchNearbyPlaces çağrıldı');
-      // Mevcut konuma yakın yerleri filtrele (1 km içindekiler)
-      const nearbyPlaces = LOCAL_PLACES_DB.filter(place => {
-        const distance = getDistance(
-          latitude,
-          longitude,
-          place.geometry.location.lat,
-          place.geometry.location.lng
+      console.log('fetchNearbyPlaces çağrıldı, koordinatlar:', latitude, longitude);
+      console.log('Arama yarıçapı:', searchRadius, 'km');
+      
+      // Metre cinsine çevir ve hassas hesapla
+      const radiusInMeters = searchRadius * 1000;
+      
+      const query = `
+        [out:json][timeout:25];
+        (
+          node["shop"](around:${radiusInMeters},${latitude},${longitude});
+          node["amenity"="restaurant"](around:${radiusInMeters},${latitude},${longitude});
+          node["amenity"="cafe"](around:${radiusInMeters},${latitude},${longitude});
+          way["leisure"="park"](around:${radiusInMeters},${latitude},${longitude});
+          node["amenity"="school"](around:${radiusInMeters},${latitude},${longitude});
+          node["amenity"="hospital"](around:${radiusInMeters},${latitude},${longitude});
+          node["amenity"="bank"](around:${radiusInMeters},${latitude},${longitude});
+          node["public_transport"="stop_position"](around:${radiusInMeters},${latitude},${longitude});
+          way["shop"="mall"](around:${radiusInMeters},${latitude},${longitude});
+          node["tourism"="hotel"](around:${radiusInMeters},${latitude},${longitude});
+          node["amenity"="pharmacy"](around:${radiusInMeters},${latitude},${longitude});
         );
-        return distance <= 1; // 1 km yarıçap
+        out body;
+        >;
+        out skel qt;
+      `;
+
+      const response = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'data=' + encodeURIComponent(query)
       });
 
-      console.log('nearbyPlaces:', nearbyPlaces);
+      if (!response.ok) {
+        throw new Error('Overpass API hatası');
+      }
 
-      setPlaces(nearbyPlaces);
+      const data = await response.json();
+      console.log('Ham veri sayısı:', data.elements.length);
+
+      // Verileri formatla ve tam olarak belirtilen yarıçap içindekileri filtrele
+      const formattedPlaces = data.elements
+        .filter(element => {
+          if (!element.type === 'node' || !element.tags) return false;
+          
+          // Mesafeyi hassas hesapla
+          const distance = getDistance(
+            latitude,
+            longitude,
+            element.lat,
+            element.lon
+          );
+          
+          // Tam olarak belirtilen yarıçap içinde mi kontrol et
+          return distance <= searchRadius;
+        })
+        .map(place => {
+          const distance = getDistance(
+            latitude,
+            longitude,
+            place.lat,
+            place.lon
+          );
+
+          return {
+            name: place.tags.name || place.tags['name:tr'] || 'İsimsiz Yer',
+            geometry: {
+              location: {
+                lat: place.lat,
+                lng: place.lon
+              }
+            },
+            types: [
+              place.tags.shop || 
+              place.tags.amenity || 
+              place.tags.tourism || 
+              place.tags.leisure || 
+              'other'
+            ],
+            distance: distance,
+            tags: place.tags
+          };
+        })
+        .sort((a, b) => a.distance - b.distance);
+
+      console.log('Filtrelenmiş yer sayısı:', formattedPlaces.length);
+      console.log('En yakın yer mesafesi:', formattedPlaces[0]?.distance);
+      console.log('En uzak yer mesafesi:', formattedPlaces[formattedPlaces.length - 1]?.distance);
+
+      setPlaces(formattedPlaces);
+
     } catch (error) {
-      console.error('Error fetching places:', error);
+      console.error('Yer arama hatası:', error);
+      Alert.alert(
+        'Hata',
+        'Yakındaki yerler alınırken bir hata oluştu: ' + error.message,
+        [{ text: 'Tamam' }]
+      );
     }
   };
 
+  // Rate limiting için basit bir yardımcı fonksiyon
+  const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  };
+
+  // Throttled versiyon of fetchNearbyPlaces
+  const throttledFetchNearbyPlaces = debounce(fetchNearbyPlaces, 1000);
+
   const renderPlaceMarkers = () => {
+    console.log('renderPlaceMarkers çağrıldı. Places:', places);
+    
+    // Görüş açısındaki yerleri filtrele
+    const visiblePlaces = places.filter(place => {
+      if (!place.geometry?.location?.lat || !place.geometry?.location?.lng) return false;
+      
+      const bearing = calculateBearing(
+        currentLocation.latitude,
+        currentLocation.longitude,
+        place.geometry.location.lat,
+        place.geometry.location.lng
+      );
+      
+      return isInViewport(bearing, deviceOrientation);
+    });
+
+    // Mesafeye göre sırala
+    visiblePlaces.sort((a, b) => a.distance - b.distance);
+
+    // Marker pozisyonlarını takip etmek için bir grid sistemi
+    const grid = {};
+    const GRID_SIZE = 80; // Grid hücre boyutu (pixel)
+    const MARKER_HEIGHT = 70; // Marker yüksekliği
+
     return (
       <View style={styles.markersContainer}>
-        {places.map((place, index) => {
+        {visiblePlaces.map((place, index) => {
           const bearing = calculateBearing(
             currentLocation.latitude,
             currentLocation.longitude,
@@ -367,42 +374,63 @@ const App = () => {
             place.geometry.location.lng
           );
 
-          const distance = getDistance(
-            currentLocation.latitude,
-            currentLocation.longitude,
-            place.geometry.location.lat,
-            place.geometry.location.lng
-          );
+          const screenWidth = Dimensions.get('window').width;
+          const baseHorizontalOffset = ((bearing - deviceOrientation + 30) / 60) * screenWidth;
+          
+          // Grid pozisyonunu hesapla
+          const gridX = Math.floor(baseHorizontalOffset / GRID_SIZE);
+          let gridY = Math.floor((100 + place.distance * 30) / GRID_SIZE);
+          
+          // Çakışmaları kontrol et ve çöz
+          while (grid[`${gridX},${gridY}`]) {
+            gridY++;
+          }
+          
+          // Grid pozisyonunu işaretle
+          grid[`${gridX},${gridY}`] = true;
 
-          // Görüş açısı kontrolü
-          if (isInViewport(bearing, deviceOrientation)) {
-            console.log('Görüş açısında:', place.name, 'Mesafe:', distance, 'Yön:', bearing);
-            
-            // Ekran genişliğine göre yatay pozisyon hesapla
-            const screenWidth = Dimensions.get('window').width;
-            const horizontalOffset = ((bearing - deviceOrientation + 30) / 60) * screenWidth;
+          // Final pozisyonları hesapla
+          const horizontalOffset = baseHorizontalOffset;
+          const verticalPosition = gridY * GRID_SIZE;
 
-            return (
-              <View
-                key={index}
-                style={[
-                  styles.placeMarker,
-                  {
-                    left: horizontalOffset,
-                    top: '40%', // Ekranın biraz üstünde göster
-                  },
-                ]}
-              >
-                <View style={styles.markerPointer} />
-                <View style={styles.markerContent}>
-                  <Text style={styles.placeName}>{place.name}</Text>
-                  <Text style={styles.placeDistance}>{distance.toFixed(1)} km</Text>
-                  <Text style={styles.placeType}>{place.types[0]}</Text>
+          return (
+            <TouchableOpacity
+              key={`${place.name}-${index}`}
+              style={[styles.placeMarker, {
+                left: horizontalOffset,
+                top: verticalPosition,
+                transform: [
+                  { translateX: -75 },
+                  { scale: Math.max(0.8, 1 - (place.distance * 0.05)) }
+                ],
+                opacity: Math.max(0.8, 1 - (place.distance * 0.1))
+              }]}
+              onPress={() => {
+                console.log('Marker tıklandı, yer:', place.name);
+                setSelectedPlace(place);
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.markerPointer} />
+              <View style={styles.markerContent}>
+                <Text 
+                  style={styles.placeName}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {place.name}
+                </Text>
+                <View style={styles.markerInfo}>
+                  <Text style={styles.placeDistance}>
+                    {place.distance.toFixed(1)} km
+                  </Text>
+                  <Text style={styles.placeType}>
+                    {place.types[0]}
+                  </Text>
                 </View>
               </View>
-            );
-          }
-          return null;
+            </TouchableOpacity>
+          );
         })}
       </View>
     );
@@ -472,6 +500,30 @@ const App = () => {
         enableZoomGesture
       />
       {currentLocation && renderPlaceMarkers()}
+      
+      <RadiusControl 
+        searchRadius={searchRadius}
+        onRadiusChange={(newRadius) => {
+          console.log('Yarıçap değişiyor:', newRadius);
+          setSearchRadius(newRadius);
+          if (currentLocation) {
+            // Yeni yarıçapla yerleri hemen güncelle
+            fetchNearbyPlaces(
+              currentLocation.latitude,
+              currentLocation.longitude
+            );
+          }
+        }}
+      />
+
+      <PlaceDetailModal 
+        isVisible={selectedPlace !== null}
+        place={selectedPlace}
+        onClose={() => {
+          console.log('Modal kapatılıyor');
+          setSelectedPlace(null);
+        }}
+      />
     </View>
   );
 };
@@ -490,46 +542,68 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 1000,
-    pointerEvents: 'none',
   },
   placeMarker: {
     position: 'absolute',
     alignItems: 'center',
     width: 150,
-    transform: [{ translateX: -75 }], // Merkeze hizala
+    zIndex: 1000,
   },
   markerPointer: {
-    width: 0,
-    height: 0,
-    backgroundColor: 'transparent',
-    borderStyle: 'solid',
-    borderLeftWidth: 8,
-    borderRightWidth: 8,
-    borderBottomWidth: 16,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: 'rgba(0, 0, 0, 0.8)',
+    width: 12,
+    height: 12,
+    backgroundColor: '#FF4081',
+    borderRadius: 6,
+    marginBottom: 5,
+    borderWidth: 2,
+    borderColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   markerContent: {
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    flexDirection: 'column',
+    backgroundColor: 'rgba(33, 33, 33, 0.9)',
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 12,
     alignItems: 'center',
+    maxWidth: '100%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   placeName: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '600',
     textAlign: 'center',
+    marginBottom: 4,
   },
   placeDistance: {
-    color: '#4CAF50',
-    fontSize: 14,
-    marginTop: 4,
+    backgroundColor: '#FF4081',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    fontSize: 12,
+    color: 'white',
+    fontWeight: '500',
+    marginTop: 2,
   },
   placeType: {
-    color: '#FFC107',
-    fontSize: 12,
+    fontSize: 11,
+    color: '#E0E0E0',
     marginTop: 2,
   },
   errorContainer: {
@@ -544,6 +618,134 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'white',
     fontSize: 14,
+  },
+  radiusControl: {
+    position: 'absolute',
+    bottom: 30,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(33, 33, 33, 0.9)',
+    padding: 15,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    zIndex: 2000, // Üstte görünmesi için
+  },
+  radiusText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 10,
+    fontWeight: '600',
+  },
+  radiusButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 50,
+    marginTop: 10,
+  },
+  radiusButton: {
+    backgroundColor: '#FF4081',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 32,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    includeFontPadding: false,
+    lineHeight: 35,
+  },
+  placeGroup: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 120,
+  },
+  groupTitle: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    alignSelf: 'center',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#212121',
+    borderRadius: 20,
+    padding: 20,
+    width: '100%',
+    maxHeight: '80%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalDetails: {
+    marginBottom: 20,
+  },
+  modalDistance: {
+    fontSize: 16,
+    color: '#FF4081',
+    marginBottom: 8,
+  },
+  modalType: {
+    fontSize: 14,
+    color: '#E0E0E0',
+    marginBottom: 8,
+  },
+  modalTag: {
+    fontSize: 13,
+    color: '#9E9E9E',
+    marginBottom: 4,
+  },
+  closeButton: {
+    backgroundColor: '#FF4081',
+    padding: 12,
+    borderRadius: 15,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  closeButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 
